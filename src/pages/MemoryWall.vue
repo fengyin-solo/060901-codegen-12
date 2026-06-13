@@ -5,6 +5,7 @@ import { useRoom } from '@/composables/useRoom'
 import { useExpire } from '@/composables/useExpire'
 import type { Memory, Topic } from '@/types'
 import { TOPIC_COLORS, TOPIC_EMOJIS } from '@/types'
+import type { TopicType } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +21,7 @@ const caption = ref('')
 const authorName = ref('')
 const selectedTopicId = ref('')
 const selectedTopicContent = ref('')
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const flippedTopics = computed(() =>
   (currentRoom.value?.topics.filter((t: Topic) => t.isFlipped) || []) as Topic[]
@@ -132,20 +134,28 @@ const goBack = () => {
   router.push(`/room/${roomId.value}`)
 }
 
+const DEFAULT_COLOR = '#9D4EDD'
+const DEFAULT_EMOJI = '💬'
+
+const getMemoryTopicType = (memory: Memory): TopicType | null => {
+  if (!memory.topicId || !currentRoom.value) return null
+  const topic = currentRoom.value.topics.find((t: Topic) => t.id === memory.topicId)
+  return topic ? topic.type : null
+}
+
+const getMemoryColor = (memory: Memory): string => {
+  const type = getMemoryTopicType(memory)
+  return type ? TOPIC_COLORS[type] : DEFAULT_COLOR
+}
+
+const getMemoryEmoji = (memory: Memory): string => {
+  const type = getMemoryTopicType(memory)
+  return type ? TOPIC_EMOJIS[type] : DEFAULT_EMOJI
+}
+
 const formatTime = (dateStr: string) => {
   const d = new Date(dateStr)
   return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-}
-
-const formatFullTime = (dateStr: string) => {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
 }
 </script>
 
@@ -205,25 +215,25 @@ const formatFullTime = (dateStr: string) => {
         <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-amber-300 via-rose-300 to-purple-300"></div>
 
         <div
-          v-for="group in timelineGroups"
-          :key="group.date"
+          v-for="dateGroup in timelineGroups"
+          :key="dateGroup.date"
           class="mb-8"
         >
           <div class="relative flex items-center gap-3 mb-4 ml-1">
             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-rose-400 flex items-center justify-center text-white text-sm font-bold shadow-md z-10">
-              {{ new Date(group.date).getDate() }}
+              {{ new Date(dateGroup.date).getDate() }}
             </div>
-            <span class="text-sm font-medium text-gray-600">{{ group.label }}</span>
+            <span class="text-sm font-medium text-gray-600">{{ dateGroup.label }}</span>
           </div>
 
           <div class="space-y-4 ml-5 pl-6">
             <div
-              v-for="memory in group.memories"
+              v-for="memory in dateGroup.memories"
               :key="memory.id"
               class="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-all overflow-hidden group"
             >
               <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
-                :style="{ backgroundColor: memory.topicId ? (TOPIC_COLORS[currentRoom.topics.find((t: Topic) => t.id === memory.topicId)?.type] || '#9D4EDD') : '#D1D5DB' }"
+                :style="{ backgroundColor: memory.topicId ? getMemoryColor(memory) : '#D1D5DB' }"
               ></div>
 
               <div class="p-4 pl-5">
@@ -239,12 +249,12 @@ const formatFullTime = (dateStr: string) => {
                       v-if="memory.topicContent"
                       class="mb-3 px-3 py-2 rounded-xl text-sm"
                       :style="{
-                        backgroundColor: (TOPIC_COLORS[currentRoom.topics.find((t: Topic) => t.id === memory.topicId)?.type] || '#9D4EDD') + '15',
-                        borderLeft: `3px solid ${TOPIC_COLORS[currentRoom.topics.find((t: Topic) => t.id === memory.topicId)?.type] || '#9D4EDD'}`
+                        backgroundColor: getMemoryColor(memory) + '15',
+                        borderLeft: `3px solid ${getMemoryColor(memory)}`
                       }"
                     >
-                      <span class="text-xs font-medium" :style="{ color: TOPIC_COLORS[currentRoom.topics.find((t: Topic) => t.id === memory.topicId)?.type] || '#9D4EDD' }">
-                        {{ TOPIC_EMOJIS[currentRoom.topics.find((t: Topic) => t.id === memory.topicId)?.type] || '💬' }}
+                      <span class="text-xs font-medium" :style="{ color: getMemoryColor(memory) }">
+                        {{ getMemoryEmoji(memory) }}
                         聊过的话题
                       </span>
                       <p class="mt-1 text-gray-700 font-medium">{{ memory.topicContent }}</p>
@@ -299,7 +309,7 @@ const formatFullTime = (dateStr: string) => {
           <div
             v-if="!photoPreview"
             class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-amber-400 transition-colors cursor-pointer"
-            @click="($refs.fileInput as HTMLInputElement)?.click()"
+            @click="fileInput?.click()"
           >
             <div class="text-4xl mb-2">📸</div>
             <p class="text-gray-500 text-sm">点击上传照片</p>
