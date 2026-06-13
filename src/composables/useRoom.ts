@@ -1,5 +1,5 @@
 import { ref, computed, onMounted } from 'vue'
-import type { Room, Topic, Member, TopicType } from '@/types'
+import type { Room, Topic, Member, TopicType, Memory } from '@/types'
 import { TOPIC_COLORS } from '@/types'
 import { 
   getRooms, getRoomById, getRoomByCode, saveRoom, deleteRoom 
@@ -41,7 +41,8 @@ export function useRoom() {
         }
       ],
       topics: [],
-      shuffledTopics: []
+      shuffledTopics: [],
+      memories: []
     }
     
     room.members.forEach(m => m.roomId = room.id)
@@ -202,6 +203,58 @@ export function useRoom() {
     rooms.value.filter(r => r.status !== 'ended')
   )
 
+  const addMemory = (
+    roomId: string,
+    photo: string,
+    author: string,
+    topicId?: string,
+    topicContent?: string,
+    caption: string = ''
+  ): Memory | null => {
+    const room = getRoomById(roomId)
+    if (!room) return null
+
+    if (!room.memories) {
+      room.memories = []
+    }
+
+    const memory: Memory = {
+      id: generateId(),
+      roomId,
+      photo,
+      topicId,
+      topicContent,
+      caption,
+      author,
+      createdAt: new Date().toISOString()
+    }
+
+    room.memories.push(memory)
+    saveRoom(room)
+
+    if (currentRoom.value?.id === roomId) {
+      currentRoom.value = room
+    }
+    loadRooms()
+
+    return memory
+  }
+
+  const removeMemory = (roomId: string, memoryId: string): boolean => {
+    const room = getRoomById(roomId)
+    if (!room || !room.memories) return false
+
+    room.memories = room.memories.filter(m => m.id !== memoryId)
+    saveRoom(room)
+
+    if (currentRoom.value?.id === roomId) {
+      currentRoom.value = room
+    }
+    loadRooms()
+
+    return true
+  }
+
   onMounted(() => {
     loadRooms()
   })
@@ -222,5 +275,7 @@ export function useRoom() {
     endGame,
     resetGame,
     removeRoom,
+    addMemory,
+    removeMemory,
   }
 }

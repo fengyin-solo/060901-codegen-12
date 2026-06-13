@@ -124,6 +124,10 @@ const goBack = () => {
 const goToGame = () => {
   router.push(`/room/${roomId.value}/game`)
 }
+
+const goToMemories = () => {
+  router.push(`/room/${roomId.value}/memories`)
+}
 </script>
 
 <template>
@@ -141,13 +145,22 @@ const goToGame = () => {
           <span>返回</span>
         </button>
         
-        <button 
-          v-if="currentRoom.status === 'ended'"
-          class="px-4 py-2 bg-green-500 text-white rounded-full text-sm font-medium"
-          @click="goToGame"
-        >
-          查看结果
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1"
+            @click="goToMemories"
+          >
+            <span>📷</span>
+            <span>记忆墙</span>
+          </button>
+          <button
+            v-if="currentRoom.status === 'ended'"
+            class="px-4 py-2 bg-green-500 text-white rounded-full text-sm font-medium"
+            @click="goToGame"
+          >
+            查看结果
+          </button>
+        </div>
       </div>
 
       <div class="bg-white rounded-3xl p-6 shadow-lg mb-6">

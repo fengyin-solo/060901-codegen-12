@@ -1,3 +1,14 @@
+export interface Memory {
+  id: string
+  roomId: string
+  photo: string
+  topicId?: string
+  topicContent?: string
+  caption: string
+  author: string
+  createdAt: string
+}
+
 export interface Room {
   id: string
   name: string
@@ -9,6 +20,7 @@ export interface Room {
   members: Member[]
   topics: Topic[]
   shuffledTopics: string[]
+  memories: Memory[]
 }
 
 export interface Topic {
